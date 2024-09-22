@@ -5,15 +5,16 @@ let canvasWidth = window.innerWidth;
 let alphabet = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "!", "#", "$", "<", ">", "?", "/", "|", "[", "]", "{", "}", "^", "`", "~", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
 let rainstreaks = [];
 let fontSize = 40;
+let lastPaintCanvas = Date.now();
 
 class Rainstreak { 
   x;
   y;
-  originalY;
   lastAction;
   sequence = [];
   sequenceLength;
   currentIndex = 0;
+  currentAlphaLevel = 0.5;
   constructor(x, y){
     this.x = x;
     this.y = y;
@@ -29,34 +30,54 @@ class Rainstreak {
     }
   }
   draw(){
-    if (this.currentIndex >= this.sequenceLength) {
-      rainstreaks.pop(this);
-      return;
-    }
     let currentY = this.y;
-    for (let i = this.currentIndex ; i > 0; i--) {
-      ctx.fillText(this.sequence[i], this.x, currentY);
-      ctx.fillStyle = "rgb(0, 143, 17, " + (i / this.sequenceLength) + ")";
-      currentY -= fontSize;
+    if (Date.now() - this.lastAction > 100) {
+      
+      this.currentIndex++;
+      this.lastAction = Date.now();
+      // this.y += fontSize;
+      if (this.currentIndex > this.sequenceLength) {
+        this.currentAlphaLevel -= 0.25;
+      }
     }
-    this.currentIndex++;
-    this.lastAction = Date.now();
+    for(let i = 0; i < this.currentIndex; i++){
+      if (i > this.sequenceLength - 1) {
+        break;
+      }
+      ctx.fontsize = fontSize + "px serif";
+      ctx.fillText(this.sequence[i], this.x, currentY);
+      if (i == this.currentIndex) {
+        ctx.fillStyle = "rgb(255, 255, 255, 1";
+      }
+      ctx.fillStyle = "rgb(0, 143, 17, " + (i*0.05 + this.currentAlphaLevel) + ")";
+      currentY += fontSize;
+    }
 
-    // // the simple one character version
-    // ctx.fillText(this.sequence[this.currentIndex], this.x, this.y);
-    // this.currentIndex++;
-    // ctx.font = fontSize + "px serif";
-    // // ctx.fillStyle = "#008f11";
-    // ctx.fillStyle = "rgb(0, 143, 17, 1)";
-    // this.y += 40;
-    // this.lastAction = Date.now();
+
+
+    // if (this.currentIndex >= this.sequenceLength + (this.sequenceLength - 1)) {
+    //   rainstreaks.pop(this);
+    //   return;
+    // }
+    // if (Date.now() - this.lastAction > 100) {
+    //   this.currentIndex++;
+    //   this.lastAction = Date.now();
+    //   this.y += fontSize;
+    //   if (this.currentIndex > this.sequenceLength) {
+    //     this.currentAlphaLevel -= 0.05;
+    //   }
+    // }
+    // for(let i = 0; i < this.currentIndex; i++){
+    //   if (i > this.sequenceLength) {
+    //     break;
+    //   }
+    //   ctx.fillText(this.sequence[i], this.x, this.y);
+    //   ctx.fillStyle = "rgb(0, 143, 17, " + 1 + ")";
+      
+    // }
+
   }
 }
-
-// window.addEventListener('resize', function() {
-  // canvas.height = window.innerHeight;
-  // canvas.width = window.innerWidth;
-// });
 
 function init() {
   canvas.height = canvasHeight;
@@ -66,19 +87,27 @@ function init() {
 
 function paintCanvas(currentTime) {
   // ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-  rainstreaks.forEach(rainstreak => {
-    if (Date.now() - rainstreak.lastAction > 100){
-      rainstreak.draw();
-    }
-  });
+  // console.log(Math.floor(Math.random() * 100));
+  if (Math.floor(Math.random() * 100) > 80) {
+    createNewRainstreak();
+  }
+  if (Date.now() - lastPaintCanvas > 100){
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    rainstreaks.forEach(rainstreak => {
+        rainstreak.draw();
+    });
+    lastPaintCanvas = Date.now();
+  }
+
   window.requestAnimationFrame(paintCanvas);
 }
 
 
 function createNewRainstreak() {
-  let coords = [Math.floor(getRandomBetweenTwoNumbers(0,800)), Math.floor(getRandomBetweenTwoNumbers(0, 800))];
-  console.log(coords);
-  let rs = new Rainstreak(Math.min(coords[0], coords[1]), Math.max(coords[0], coords[1])); 
+  // let coords = [Math.floor(getRandomBetweenTwoNumbers(0,800)), Math.floor(getRandomBetweenTwoNumbers(0, 800))]; 
+  // let rs = new Rainstreak(Math.min(coords[0], coords[1]), Math.max(coords[0], coords[1])); 
+  let rs = new Rainstreak(Math.floor(getRandomBetweenTwoNumbers(0, 800)), Math.floor(getRandomBetweenTwoNumbers(0, 150))); 
+
   rainstreaks.push(rs);
 }
 
@@ -86,13 +115,6 @@ function getRandomBetweenTwoNumbers(min, max) {
   return Math.random() * (max - min) + min;
 }
 
-createNewRainstreak();
-createNewRainstreak();
-createNewRainstreak();
-createNewRainstreak();
-
 init();
 
-
-// console.log(rs.sequenceLength);
-// console.log(rs.sequence);
+createNewRainstreak();
